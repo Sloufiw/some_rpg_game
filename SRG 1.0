@@ -129,10 +129,11 @@ def encounter_enemy():
                 else:
                     print("Неправильный ответ! Вы не нанесли урон.\n")
 
-                # Атака врага по игроку
-                player_health -= enemy_damage
-                print(f"{enemy_name_singular} атаковал вас и нанёс {enemy_damage} урона!")
-                print(f"Ваше здоровье: {player_health}\n")
+                # Если игрок ответил неправильно или время вышло, враг атакует
+                if player_answer != answer or time_up:
+                    player_health -= enemy_damage
+                    print(f"{enemy_name_singular} атаковал вас и нанёс {enemy_damage} урона!")
+                    print(f"Ваше здоровье: {player_health}\n")
 
                 # Проверка на смерть игрока
                 if player_health <= 0:
