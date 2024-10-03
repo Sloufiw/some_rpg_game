@@ -1,0 +1,191 @@
+import threading
+import random
+
+# Глобальные переменные
+player_name = ""
+player_health = 100
+player_damage = 25
+weapon = "Stone Sword"
+xp = 0
+lvl = 1
+ork_health = 444
+ork_damage = 22
+skelet_health = 35
+skelet_damage = 4
+
+# Переменная для железного меча
+iron_sword_damage = 40
+
+# Переменная для отслеживания времени ответа игрока
+time_up = False
+
+# Функция для отображения главного меню
+def display_menu():
+    print("\n--- Главное меню ---")
+    print("1) Войти в подземелье")
+    print("2) Статистика")
+    print("3) Выйти из игры")
+
+# Функция для получения имени игрока
+def get_player_name():
+    global player_name
+    player_name = input("Введите ваше имя: ")
+    print(f"Добро пожаловать, {player_name}!")
+
+# Основное меню игры
+def menu():
+    while True:
+        display_menu()
+
+        try:
+            user_choice = int(input("Выберите опцию: "))
+        except ValueError:
+            print("Пожалуйста, введите число от 1 до 3.")
+            continue
+
+        if user_choice == 3:
+            print("Выход из игры.")
+            break
+
+        elif user_choice == 2:
+            print(f"\n--- Статистика ---")
+            print(f"Имя: {player_name}")
+            print(f"Здоровье: {player_health}")
+            print(f"Оружие: {weapon}")
+            print(f"Урон: {player_damage}")
+
+        elif user_choice == 1:
+            enter_dungeon()  # Начинается приключение в подземелье
+
+        else:
+            print("Некорректный выбор. Пожалуйста, выберите опцию от 1 до 3.\n")
+
+# Вход в подземелье
+def enter_dungeon():
+    print("\nВы вошли в подземелье.\n")
+    open_chest()  # Открытие сундука при входе в подземелье
+
+    # Количество мобов для сражения
+    total_enemies = 3
+
+    for _ in range(total_enemies):
+        encounter_enemy()
+
+    print("Вы победили всех врагов! Продолжение следует...\n")
+
+# Функция открытия сундука с железным мечом
+def open_chest():
+    global player_damage, weapon
+    print("Вы нашли сундук!")
+
+    # Логика получения железного меча
+    weapon = "Iron Sword"
+    player_damage = iron_sword_damage
+
+    print(f"Вы получили {weapon} с уроном {player_damage}!")
+
+# Сражение с врагом
+def encounter_enemy():
+    global player_health
+
+    # Случайный выбор врага (скелет или орк)
+    if random.choice([True, False]):  # 50% шанс на скелета или орка
+        enemy_type = "скелет"
+        enemy_health = skelet_health
+        enemy_damage = skelet_damage
+        enemy_name_singular = get_enemy_name(enemy_type)
+
+        print(f"\nВы встретили {enemy_name_singular}!")
+    else:
+        enemy_type = "орк"
+        enemy_health = ork_health
+        enemy_damage = ork_damage
+        enemy_name_singular = get_enemy_name(enemy_type)
+
+        print(f"\nВы встретили {enemy_name_singular} - БОССА!")
+
+    while enemy_health > 0 and player_health > 0:
+        question, answer = generate_math_question()
+        print(question)
+
+        time_up = False
+        timer_thread = threading.Timer(10.0, timer_expired)
+        timer_thread.start()
+
+        try:
+            player_answer = int(input("Ваш ответ (у вас есть 10 секунд): "))
+            timer_thread.cancel()
+
+            if not time_up:
+                if player_answer == answer:
+                    enemy_health -= player_damage
+                    print(f"Вы правильно ответили! Вы нанесли {player_damage} урона!")
+                    print(f"У {enemy_name_singular} осталось здоровья: {enemy_health}")
+
+                    if enemy_health <= 0:
+                        print(f"Вы победили {enemy_name_singular}!\n")
+                        return
+
+                else:
+                    print("Неправильный ответ! Вы не нанесли урон.\n")
+
+                # Атака врага по игроку
+                player_health -= enemy_damage
+                print(f"{enemy_name_singular} атаковал вас и нанёс {enemy_damage} урона!")
+                print(f"Ваше здоровье: {player_health}\n")
+
+                # Проверка на смерть игрока
+                if player_health <= 0:
+                    print("Вы погибли! Игра окончена.")
+                    exit()  # Завершение игры
+
+            else:
+                print("Время вышло! Вы не успели ответить.")
+                player_health -= enemy_damage
+                print(f"{enemy_name_singular} атаковал вас и нанёс {enemy_damage} урона!")
+                print(f"Ваше здоровье: {player_health}\n")
+
+                # Проверка на смерть игрока
+                if player_health <= 0:
+                    print("Вы погибли! Игра окончена.")
+                    exit()  # Завершение игры
+
+        except ValueError:
+            print("Пожалуйста, введите число.")
+            timer_thread.cancel()
+            player_health -= enemy_damage
+            print(f"{enemy_name_singular} атаковал вас и нанёс {enemy_damage} урона!")
+            print(f"Ваше здоровье: {player_health}\n")
+
+            # Проверка на смерть игрока
+            if player_health <= 0:
+                print("Вы погибли! Игра окончена.")
+                exit()  # Завершение игры
+
+# Получение имени врага в зависимости от типа
+def get_enemy_name(enemy_type):
+    if enemy_type == "орк":
+        return "орк"
+    elif enemy_type == "скелет":
+        return "скелет"
+    return enemy_type
+
+# Генерация математического вопроса для боя
+def generate_math_question():
+    num1 = random.randint(1, 10)
+    num2 = random.randint(1, 10)
+    operation = random.choice(['+', '-'])
+
+    answer = num1 + num2 if operation == '+' else num1 - num2
+    question = f"Сколько будет {num1} {operation} {num2}?"
+
+    return question, answer
+
+# Таймер для отслеживания времени ответа игрока
+def timer_expired():
+    global time_up
+    time_up = True
+
+# Запуск игры
+get_player_name()
+menu()
